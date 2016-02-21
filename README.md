@@ -1,8 +1,15 @@
 # ORP Remote Relay Module
-Module Remote Relay for Svxlink to drive 4 relays by DTMF Code
-forked from Module-Remote-Relay F8ASB
+The ORP Remote Relay Module is a SVXLink module to add features to OpenRepeater/SVXLink to control relays by DTMF tones remotely. It based on code forked from Module-Remote-Relay by F8ASB but modified to be better suited for used with the OpenRepeater Project.
 
 ## Installation Instructions
+
+### Copy Module Code Files
+RemoteRelay.tcl   -> /usr/share/svxlink/events.d
+ModuleRemoteRelay->/usr/share/svxlink/modules.d
+/etc/openrepeater/svxlink/svxlink.d/ModuleRemoteRelay.conf
+
+### Copy Audio Files
+For example for french language: /usr/share/svxlink/sounds/fr_FR/RemoteRelay
 
 ### Modifying SVXLINK.CONF
 
