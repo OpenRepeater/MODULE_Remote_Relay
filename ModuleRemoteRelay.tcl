@@ -91,77 +91,102 @@ proc dtmfDigitReceived {char duration} {
 #
 proc dtmfCmdReceived {cmd} {
   printInfo "DTMF command received: $cmd"
+
 # ON command 201 211 221 231
-  if {$cmd == "201"} {
-    printInfo "Relay K1 ON"
-    playMsg "relay1on";
-    puts "Executing external command"
-    exec gpio -g write 20 1 &
-  } elseif {$cmd == "211"} {
-    printInfo "Relay K2 ON"
-    playMsg "relay2on";
+  if {$cmd == "11"} {
+    printInfo "Relay 1 ON"
+    playMsg "relay1";
+    playMsg "on";
+    #puts "Executing external command"
+    #exec gpio -g write 20 1 &
+
+  } elseif {$cmd == "21"} {
+    printInfo "Relay 2 ON"
+    playMsg "relay2";
+    playMsg "on";
     puts "Executing external command"
     exec gpio -g write 21 1 &
-  } elseif {$cmd == "221"} {
-    printInfo "Relay K3 ON"
-    playMsg "relay3on";
+
+  } elseif {$cmd == "31"} {
+    printInfo "Relay 3 ON"
+    playMsg "relay3";
+    playMsg "on";
     puts "Executing external command"
     exec gpio -g write 22 1 &
-} elseif {$cmd == "231"} {
-    printInfo "Relay K4 ON"
-    playMsg "relay4on";
+
+} elseif {$cmd == "41"} {
+    printInfo "Relay 4 ON"
+    playMsg "relay4";
+    playMsg "on";
     puts "Executing external command"
     exec gpio -g write 23 1 &
+
 #OFF command 200 210 220 230
-} elseif {$cmd == "200"} {
-    printInfo "Relay K1 OFF"
-    playMsg "relay1off";
+} elseif {$cmd == "10"} {
+    printInfo "Relay 1 OFF"
+    playMsg "relay1";
+    playMsg "off";
     puts "Executing external command"
     exec gpio -g write 20 0 &
-  } elseif {$cmd == "210"} {
-    printInfo "Relay K2 OFF"
-    playMsg "relay2off";
+
+  } elseif {$cmd == "20"} {
+    printInfo "Relay 2 OFF"
+    playMsg "relay2";
+    playMsg "off";
     puts "Executing external command"
     exec gpio -g write 21 0 &
-  } elseif {$cmd == "220"} {
-    printInfo "Relay K3 OFF"
-    playMsg "relay3off";
+
+  } elseif {$cmd == "30"} {
+    printInfo "Relay 3 OFF"
+    playMsg "relay3";
+    playMsg "off";
     puts "Executing external command"
     exec gpio -g write 22 0 &
-  } elseif {$cmd == "230"} {
-    printInfo "Relay K4 OFF"
-    playMsg "relay4off";
+
+  } elseif {$cmd == "40"} {
+    printInfo "Relay 4 OFF"
+    playMsg "relay4";
+    playMsg "off";
     puts "Executing external command"
     exec gpio -g write 23 0 &
+
 # PULSE command 202 212 222 232
-  } elseif {$cmd == "202"} {
-    printInfo "Relay K1 PULSE"
-    playMsg "relay1pulse";
+  } elseif {$cmd == "12"} {
+    printInfo "Relay 1 Momentary"
+    playMsg "relay1";
+    playMsg "momentary";
     puts "Executing external command"
     exec gpio -g write 20 1 &
     after 100
     exec gpio -g write 20 0 &
-  } elseif {$cmd == "212"} {
-    printInfo "Relay K2 PULSE"
-    playMsg "relay2pulse";
+
+  } elseif {$cmd == "22"} {
+    printInfo "Relay 2 Momentary"
+    playMsg "relay2";
+    playMsg "momentary";
     puts "Executing external command"
     exec gpio -g write 21 1 &
     after 100
     exec gpio -g write 21 0 &
-  } elseif {$cmd == "212"} {
-    printInfo "Relay K3 PULSE"
-    playMsg "relay3pulse";
+
+  } elseif {$cmd == "32"} {
+    printInfo "Relay 3 Momentary"
+    playMsg "relay3";
+    playMsg "momentary";
     puts "Executing external command"
     exec gpio -g write 22 1 &
     after 100
     exec gpio -g write 22 0 &
-  } elseif {$cmd == "232"} {
-    printInfo "Relay K4 PULSE"
-    playMsg "relay4pulse";
+
+  } elseif {$cmd == "42"} {
+    printInfo "Relay 4 Momentary"
+    playMsg "relay4";
+    playMsg "momentary";
     puts "Executing external command"
     exec gpio -g write 23 1 &
     after 100
     exec gpio -g write 23 0 &
+
  } elseif {$cmd == ""} {
     deactivateModule
   } else {
