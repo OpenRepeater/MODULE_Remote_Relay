@@ -79,7 +79,7 @@ proc deactivateCleanup {} {
 #   duration - The duration of the received DTMF digit
 #
 proc dtmfDigitReceived {char duration} {
-  printInfo "DTMF digit $char received with duration $duration milliseconds"
+  #printInfo "DTMF digit $char received with duration $duration milliseconds"
 
 }
 
@@ -92,107 +92,53 @@ proc dtmfDigitReceived {char duration} {
 proc dtmfCmdReceived {cmd} {
   printInfo "DTMF command received: $cmd"
 
-# ON command 201 211 221 231
-  if {$cmd == "11"} {
-    printInfo "Relay 1 ON"
-    playMsg "relay1";
-    playMsg "on";
-    #puts "Executing external command"
-    #exec gpio -g write 20 1 &
 
-  } elseif {$cmd == "21"} {
-    printInfo "Relay 2 ON"
-    playMsg "relay2";
-    playMsg "on";
-    puts "Executing external command"
-    exec gpio -g write 21 1 &
+set GPIO_RELAY(1) "20"
+set GPIO_RELAY(3) "17"
+set GPIO_RELAY(4) "23"
 
-  } elseif {$cmd == "31"} {
-    printInfo "Relay 3 ON"
-    playMsg "relay3";
-    playMsg "on";
-    puts "Executing external command"
-    exec gpio -g write 22 1 &
 
-} elseif {$cmd == "41"} {
-    printInfo "Relay 4 ON"
-    playMsg "relay4";
-    playMsg "on";
-    puts "Executing external command"
-    exec gpio -g write 23 1 &
+	# Split into command into sub digits (Relay & State)
+	set digits [split $cmd {}]
+	
+	# Assign digits to variables
+	lassign $digits \
+	     relayNum relayState
 
-#OFF command 200 210 220 230
-} elseif {$cmd == "10"} {
-    printInfo "Relay 1 OFF"
-    playMsg "relay1";
-    playMsg "off";
-    puts "Executing external command"
-    exec gpio -g write 20 0 &
+	if {[info exists GPIO_RELAY($relayNum)]} {
+		if {$relayState == "0"} {
+			### RELAY OFF ###
+			printInfo "Relay $relayNum OFF (GPIO: $GPIO_RELAY($relayNum))"
+			playMsg "relay$relayNum";
+			playMsg "off";
+			exec echo 0 > /sys/class/gpio/gpio$GPIO_RELAY($relayNum)/value &
+	
+		} elseif {$relayState == "1"} {
+			### RELAY ON ###
+			printInfo "Relay $relayNum ON (GPIO: $GPIO_RELAY($relayNum))"
+			playMsg "relay$relayNum";
+			playMsg "on";
+			exec echo 1 > /sys/class/gpio/gpio$GPIO_RELAY($relayNum)/value &
+	
+		} elseif {$relayState == "2"} {
+			### RELAY MOMENTARY ###
+			printInfo "Relay $relayNum Momentary (GPIO: $GPIO_RELAY($relayNum))"
+			playMsg "relay$relayNum";
+			playMsg "momentary";
+			exec echo 1 > /sys/class/gpio/gpio$GPIO_RELAY($relayNum)/value &
+			after 1000
+			exec echo 0 > /sys/class/gpio/gpio$GPIO_RELAY($relayNum)/value &
+			
+		} else {
+			processEvent "unknown_command $cmd"
+		}
 
-  } elseif {$cmd == "20"} {
-    printInfo "Relay 2 OFF"
-    playMsg "relay2";
-    playMsg "off";
-    puts "Executing external command"
-    exec gpio -g write 21 0 &
-
-  } elseif {$cmd == "30"} {
-    printInfo "Relay 3 OFF"
-    playMsg "relay3";
-    playMsg "off";
-    puts "Executing external command"
-    exec gpio -g write 22 0 &
-
-  } elseif {$cmd == "40"} {
-    printInfo "Relay 4 OFF"
-    playMsg "relay4";
-    playMsg "off";
-    puts "Executing external command"
-    exec gpio -g write 23 0 &
-
-# PULSE command 202 212 222 232
-  } elseif {$cmd == "12"} {
-    printInfo "Relay 1 Momentary"
-    playMsg "relay1";
-    playMsg "momentary";
-    puts "Executing external command"
-    exec gpio -g write 20 1 &
-    after 100
-    exec gpio -g write 20 0 &
-
-  } elseif {$cmd == "22"} {
-    printInfo "Relay 2 Momentary"
-    playMsg "relay2";
-    playMsg "momentary";
-    puts "Executing external command"
-    exec gpio -g write 21 1 &
-    after 100
-    exec gpio -g write 21 0 &
-
-  } elseif {$cmd == "32"} {
-    printInfo "Relay 3 Momentary"
-    playMsg "relay3";
-    playMsg "momentary";
-    puts "Executing external command"
-    exec gpio -g write 22 1 &
-    after 100
-    exec gpio -g write 22 0 &
-
-  } elseif {$cmd == "42"} {
-    printInfo "Relay 4 Momentary"
-    playMsg "relay4";
-    playMsg "momentary";
-    puts "Executing external command"
-    exec gpio -g write 23 1 &
-    after 100
-    exec gpio -g write 23 0 &
-
- } elseif {$cmd == ""} {
-    deactivateModule
-  } else {
-    processEvent "unknown_command $cmd"
-  }
-
+	} elseif {$cmd == ""} {
+		deactivateModule
+	} else {
+		processEvent "unknown_command $cmd"
+	}
+	
 }
 
 
@@ -226,8 +172,7 @@ proc squelchOpen {is_open} {
 # that initiated the message playing.
 #
 proc allMsgsWritten {} {
-  printInfo "Test allMsgsWritten called..."
-  
+  #printInfo "Test allMsgsWritten called..."
 }
 
 
