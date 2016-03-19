@@ -40,40 +40,56 @@ namespace eval RemoteRelay {
 
 	# Executed when this module is being activated
 	proc activateInit {} {
+		# Loop through config variables for relays and write into array, up to 8 relays supported
 		variable GPIO_RELAY
-		variable MOMENTARY_DELAY
-		variable ACCESS_PIN
+		set n 1
+		while {$n <= 8} {
+			variable CFG_GPIO_RELAY_$n
+			if { ([info exists CFG_GPIO_RELAY_$n]) && ([set CFG_GPIO_RELAY_$n] > 0) } {
+				set GPIO_RELAY($n) [set CFG_GPIO_RELAY_$n]
+			}
+		    set n [expr {$n + 1}]
+		}			
+
+		# Delay Value in Milliseconds
+		variable CFG_MOMENTARY_DELAY
+	    if {![info exists CFG_MOMENTARY_DELAY]} { set CFG_MOMENTARY_DELAY 100 }
+
+		# Setting to turn off all relays upon module deactivation / timeout
+		variable CFG_RELAYS_OFF_DEACTIVATION
+		variable RELAYS_OFF_DEACTIVATION
+		if { ([info exists CFG_RELAYS_OFF_DEACTIVATION]) && ([set CFG_RELAYS_OFF_DEACTIVATION] == "1" ) } {
+			set RELAYS_OFF_DEACTIVATION "1"
+		} else {
+			set RELAYS_OFF_DEACTIVATION "0"			
+		}
+
+		# Access Variables
+		variable CFG_ACCESS_PIN
+		variable CFG_ACCESS_ATTEMPTS_ALLOWED
 		variable ACCESS_PIN_REQ
 		variable ACCESS_GRANTED
-		variable ACCESS_ATTEMPTS_ALLOWED
 		variable ACCESS_ATTEMPTS_ATTEMPTED
-		
-
-		set GPIO_RELAY(1) "26"
-		set GPIO_RELAY(2) "19"
-		set GPIO_RELAY(3) "13"
-		set GPIO_RELAY(4) "6"
-	
-		# delay value in milliseconds
-		set MOMENTARY_DELAY "200"
-
-		set ACCESS_PIN "1234"
-		set ACCESS_PIN_REQ 0
+	    if {[info exists CFG_ACCESS_PIN]} { 
+			set ACCESS_PIN_REQ 1
+			if {![info exists CFG_ACCESS_ATTEMPTS_ALLOWED]} { set CFG_ACCESS_ATTEMPTS_ALLOWED 3 }
+		} else {
+			set ACCESS_PIN_REQ 0
+		}
 		set ACCESS_GRANTED 0
-		set ACCESS_ATTEMPTS_ALLOWED 3
 		set ACCESS_ATTEMPTS_ATTEMPTED 0
 
-		printInfo "Module activated"
+
+		printInfo "Module Activated"
 
 		if {$ACCESS_PIN_REQ == "1"} {
 			printInfo "--- PLEASE ENTER YOUR PIN FOLLOWED BY THE POUND SIGN ---"
-			playMsg "access-enter-pin";
+			playMsg "access_enter_pin";
 
 		} else {
 			# No Pin Required but this is the first time the module has been run so play prompt
-			playMsg "enter-command";
+			playMsg "enter_command";
 		}
-		
 		
 	}
 	
@@ -81,20 +97,21 @@ namespace eval RemoteRelay {
 	# Executed when this module is being deactivated.
 	proc deactivateCleanup {} {
 		printInfo "Module deactivated"
+
+		variable RELAYS_OFF_DEACTIVATION
+		if {$RELAYS_OFF_DEACTIVATION == "1"} {
+			allRelaysOFF
+		}
 	}
 	
-
-	# Executed when a DTMF digit (0-9, A-F, *, #) is received
-	proc dtmfDigitReceived {char duration} {
-		#printInfo "DTMF digit $char received with duration $duration milliseconds"
-	}
-
 	
-
+	
+	
 	# Returns voice status of all relays
 	proc allRelaysStatus {} {
 		variable GPIO_RELAY
 		printInfo "STATUS OF ALL RELAYS"
+		playMsg "status";
 		foreach RELAY_NUM [lsort [array name GPIO_RELAY]] {
 			set GPIO_NUM $GPIO_RELAY($RELAY_NUM)
 			set GPIO_FILE [open "/sys/class/gpio/gpio$GPIO_NUM/value" r]
@@ -102,12 +119,14 @@ namespace eval RemoteRelay {
 			close $GPIO_FILE
 			if {$RELAY_STATE == "1"} {
 				printInfo "Relay $RELAY_NUM ON"
-				playMsg "relay$RELAY_NUM";
+				playMsg "relay";
+				playMsg "$RELAY_NUM";
 				playMsg "on";
 				playSilence 700;
 			} else {
 				printInfo "Relay $RELAY_NUM OFF"
-				playMsg "relay$RELAY_NUM";
+				playMsg "relay";
+				playMsg "$RELAY_NUM";
 				playMsg "off";
 				playSilence 700;
 			}
@@ -117,7 +136,9 @@ namespace eval RemoteRelay {
 	# Proceedure to turn off all relays
 	proc allRelaysOFF {} {
 		variable GPIO_RELAY
-		printInfo "TURN ALL RELAYS OFF"
+		printInfo "ALL RELAYS OFF"
+		playMsg "all_relays";
+		playMsg "off";
 		foreach RELAY_NUM [lsort [array name GPIO_RELAY]] {
 			set GPIO_NUM $GPIO_RELAY($RELAY_NUM)
 		    printInfo "Relay $RELAY_NUM OFF"
@@ -130,6 +151,8 @@ namespace eval RemoteRelay {
 	proc allRelaysON {} {
 		variable GPIO_RELAY
 		printInfo "TURN ALL RELAYS ON"
+		playMsg "all_relays";
+		playMsg "on";
 		foreach RELAY_NUM [lsort [array name GPIO_RELAY]] {
 			set GPIO_NUM $GPIO_RELAY($RELAY_NUM)
 		    printInfo "Relay $RELAY_NUM ON"
@@ -141,16 +164,18 @@ namespace eval RemoteRelay {
 	# Proceedure to turn all relays on momentary
 	proc allRelaysMomentary {} {
 		variable GPIO_RELAY
-		variable MOMENTARY_DELAY
+		variable CFG_MOMENTARY_DELAY
 		printInfo "TURN ALL RELAYS MOMENTARY"
+		playMsg "all_relays";
+		playMsg "momentary";
 		foreach RELAY_NUM [lsort [array name GPIO_RELAY]] {
 			set GPIO_NUM $GPIO_RELAY($RELAY_NUM)
 		    printInfo "Relay $RELAY_NUM Momentary"
 			#Turn off first to reset if already left on.
 			exec echo 0 > /sys/class/gpio/gpio$GPIO_NUM/value &
-			after $MOMENTARY_DELAY
+			after $CFG_MOMENTARY_DELAY
 			exec echo 1 > /sys/class/gpio/gpio$GPIO_NUM/value &
-			after $MOMENTARY_DELAY
+			after $CFG_MOMENTARY_DELAY
 			exec echo 0 > /sys/class/gpio/gpio$GPIO_NUM/value &
 			after 100
 		}
@@ -160,6 +185,7 @@ namespace eval RemoteRelay {
 	proc testAllRelays {} {
 		variable GPIO_RELAY
 		printInfo "RELAY TEST"
+		playMsg "relay_test";
 			foreach RELAY_NUM [lsort [array name GPIO_RELAY]] {
 				set GPIO_NUM $GPIO_RELAY($RELAY_NUM)
 		    printInfo "Testing Relay $RELAY_NUM (GPIO $GPIO_NUM)"
@@ -168,13 +194,15 @@ namespace eval RemoteRelay {
 			exec echo 0 > /sys/class/gpio/gpio$GPIO_NUM/value &
 			after 500
 		}
+		playMsg "complete";
 	}
 
 	# Proceedure to turn off single relay
 	proc relayOff {NUM} {
 		variable GPIO_RELAY
 		printInfo "Relay $NUM OFF (GPIO: $GPIO_RELAY($NUM))"
-		playMsg "relay$NUM";
+		playMsg "relay";
+		playMsg "$NUM";
 		playMsg "off";
 		exec echo 0 > /sys/class/gpio/gpio$GPIO_RELAY($NUM)/value &
 	}
@@ -183,23 +211,25 @@ namespace eval RemoteRelay {
 	proc relayOn {NUM} {
 		variable GPIO_RELAY
 		printInfo "Relay $NUM ON (GPIO: $GPIO_RELAY($NUM))"
-		playMsg "relay$NUM";
+		playMsg "relay";
+		playMsg "$NUM";
 		playMsg "on";
 		exec echo 1 > /sys/class/gpio/gpio$GPIO_RELAY($NUM)/value &
 	}
 
-	# Proceedure to turn on single relay
+	# Proceedure to momentarily turn on single relay
 	proc relayMomentary {NUM} {
 		variable GPIO_RELAY
-		variable MOMENTARY_DELAY
+		variable CFG_MOMENTARY_DELAY
 		printInfo "Relay $NUM Momentary (GPIO: $GPIO_RELAY($NUM))"
-		playMsg "relay$NUM";
+		playMsg "relay";
+		playMsg "$NUM";
 		playMsg "momentary";
 		#Turn off first to reset if already left on.
 		exec echo 0 > /sys/class/gpio/gpio$GPIO_RELAY($NUM)/value &
-		after $MOMENTARY_DELAY
+		after $CFG_MOMENTARY_DELAY
 		exec echo 1 > /sys/class/gpio/gpio$GPIO_RELAY($NUM)/value &
-		after $MOMENTARY_DELAY
+		after $CFG_MOMENTARY_DELAY
 		exec echo 0 > /sys/class/gpio/gpio$GPIO_RELAY($NUM)/value &
 	}
 
@@ -209,7 +239,7 @@ namespace eval RemoteRelay {
 		printInfo "DTMF command received: $cmd"
 	
 		variable GPIO_RELAY
-		variable MOMENTARY_DELAY
+		variable CFG_MOMENTARY_DELAY
 
 		# Split into command into sub digits (Relay & State)
 		set digits [split $cmd {}]
@@ -260,10 +290,10 @@ namespace eval RemoteRelay {
 
 	# Execute when a DTMF Command is received and check for access.
 	proc dtmfCmdReceived {cmd} {
-		variable ACCESS_PIN
+		variable CFG_ACCESS_PIN
 		variable ACCESS_PIN_REQ
 		variable ACCESS_GRANTED
-		variable ACCESS_ATTEMPTS_ALLOWED
+		variable CFG_ACCESS_ATTEMPTS_ALLOWED
 		variable ACCESS_ATTEMPTS_ATTEMPTED		
 
 		if {$ACCESS_PIN_REQ == 1} {
@@ -273,25 +303,25 @@ namespace eval RemoteRelay {
 				changeRelayState $cmd
 			} else {
 				# Access Not Granted Yet, Process Pin
-				if {$cmd == $ACCESS_PIN} {
+				if {$cmd == $CFG_ACCESS_PIN} {
 					set ACCESS_GRANTED 1
 					printInfo "ACCESS GRANTED --------------------"
-					playMsg "access-granted";
-					playMsg "enter-command";
+					playMsg "access_granted";
+					playMsg "enter_command";
 				} elseif {$cmd == ""} {
 					# If only pound sign is entered, deactivate module
 					deactivateModule
 				} else {
 					incr ACCESS_ATTEMPTS_ATTEMPTED
-					printInfo "FAILED ACCESS ATTEMPT ($ACCESS_ATTEMPTS_ATTEMPTED/$ACCESS_ATTEMPTS_ALLOWED) --------------------"
+					printInfo "FAILED ACCESS ATTEMPT ($ACCESS_ATTEMPTS_ATTEMPTED/$CFG_ACCESS_ATTEMPTS_ALLOWED) --------------------"
 
-					if {$ACCESS_ATTEMPTS_ATTEMPTED < $ACCESS_ATTEMPTS_ALLOWED} {
+					if {$ACCESS_ATTEMPTS_ATTEMPTED < $CFG_ACCESS_ATTEMPTS_ALLOWED} {
 						printInfo "Please try again!!! --------------------"
-						playMsg "access-invalid-pin";
-						playMsg "access-try-again";
+						playMsg "access_invalid_pin";
+						playMsg "access_try_again";
 					} else {
 						printInfo "ACCESS DENIED!!! --------------------"
-						playMsg "access-denied";
+						playMsg "access_denied";
 						deactivateModule
 					}
 				}					
