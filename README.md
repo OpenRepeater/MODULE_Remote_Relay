@@ -27,7 +27,6 @@ The ORP Remote Relay Module is a SVXLink module to add features to OpenRepeater/
 
 ### Copy Audio Files
 Copy the contents of the appropriate language folder in github to the correct system folder. For example for English language: /usr/share/svxlink/sounds/en_US/RemoteRelays
-(Note: French is currently broken, those are the old sound files.)
 
 ### Modifying SVXLINK.CONF
 
