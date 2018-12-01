@@ -11,14 +11,14 @@
 */
 
 $default_settings = [
-    'timeout' => '99',
+    'timeout' => '300',
     'momentary_delay' => '200',
     'access_pin' => '1234',
-    'access_attempts_allowed' => '2',
+    'access_attempts_allowed' => '3',
     'relays_off_deactivation' => '1',
     'relays_gpio_active_state' => 'low',
 	'relay' => [
-		'1' => [
+		1 => [
 			'gpio' => '0',
 			'label' => 'Relay 1'
 		]
