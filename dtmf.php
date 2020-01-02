@@ -4,8 +4,8 @@
 * but highly recommended if your module has DTMF commands. 
 */
 
-$module_id = $cur_mod['moduleKey'];
-$options = unserialize($cur_mod['moduleOptions']);
+$module_id = $cur_mod_loop['moduleKey'];
+$options = unserialize($cur_mod_loop['moduleOptions']);
 
 $sub_subcommands = 'STATUS REPORT
 0#		Speaks state of all relays (On/Off)
